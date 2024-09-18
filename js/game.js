@@ -22,11 +22,9 @@ function createScene(){
     document.body.appendChild(renderer.domElement);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // Додаємо світло
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
-    // Створюємо гравця
     let geometry = new THREE.BoxGeometry(1, 1, 1);
     let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     player = new THREE.Mesh(geometry, material);

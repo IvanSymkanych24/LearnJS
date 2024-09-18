@@ -14,6 +14,7 @@ const orangeColor = new THREE.Color(0xe6a118);
 let playerSpeed = 0.1;
 let playerLane = 0;
 let player;
+let playerMixer;
 let trackFlat;
 let brain;
 
@@ -30,12 +31,18 @@ function createScene(){
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
-    let geometry = new THREE.BoxGeometry(1, 1, 1);
-    let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    player = new THREE.Mesh(geometry, material);
-    player.position.y = 1;
-    scene.add(player);
+    loader.load('models/Stickman_with_anims.glb', (gltf) => {
+        player = gltf.scene;
+        scene.add(player);
 
+        playerMixer = new THREE.AnimationMixer(player);
+
+        const animations = gltf.animations;
+        const action = playerMixer.clipAction(animations[4]);
+        action.play();
+        console.log('Available animations:', animations);
+      });
+      
     camera.position.set(0, 5, 10);
     camera.lookAt(scene.position);
 
@@ -88,6 +95,10 @@ function spawnTrack(x, y, z) {
 
 function animate() {
     requestAnimationFrame(animate);
+
+    if (playerMixer) {
+        playerMixer.update(0.01);
+    }
 
     // player.position.z -= playerSpeed;
     // player.position.x = THREE.MathUtils.lerp(player.position.x, lanes[playerLane + 1], 0.1);

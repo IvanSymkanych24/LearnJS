@@ -7,11 +7,15 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerH
 const loader = new GLTFLoader();
 const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
 const lanes = [-3, 0, 3];
+const blueColor = new THREE.Color(0x0dabf0);
+const purpleColor = new THREE.Color(0x8d1bac);
+const orangeColor = new THREE.Color(0xe6a118);
 
 let playerSpeed = 0.1;
 let playerLane = 0;
 let player;
 let trackFlat;
+let brain;
 
 function init(){
     createScene();
@@ -19,6 +23,7 @@ function init(){
 };
 
 function createScene(){
+    scene.background = new THREE.Color(0xcccccc);
     document.body.appendChild(renderer.domElement);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -32,7 +37,7 @@ function createScene(){
     scene.add(player);
 
     camera.position.set(0, 5, 10);
-    camera.lookAt(player.position);
+    camera.lookAt(scene.position);
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowLeft') {
@@ -46,23 +51,47 @@ function createScene(){
     loader.load('/models/Track_parts.glb', (gltf) => {
         trackFlat = gltf.scene.children[1]; 
         for (let i = 0; i < 15; i++) {
-            addTrackPart(0, 0, -i * 25);
+            spawnTrack(0, 0, -i * 25);
         }
+    });
+
+    loader.load('/models/Brain_model.glb', (gltf) => {
+      brain = gltf.scene.children[0];
+
+      spawnBrain(1, 1, 0, blueColor);
+      spawnBrain(1, 2, 0, purpleColor);
+      spawnBrain(1, 3, 0, orangeColor);
+
     });
 }
 
-function addTrackPart(x, y, z) {
-    const trackClone = trackFlat.clone();  
-    trackClone.position.set(x, y, z);    
-    scene.add(trackClone);               
+function spawnBrain(x,y,z,color)
+{
+    const clone = brain.clone();
+    clone.position.set(x,y,z);
+
+    clone.traverse((child) => {
+        if (child.isMesh) {
+          child.material = child.material.clone();
+          child.material.color.set(color);
+        }
+      });
+
+    scene.add(clone);
+}
+
+function spawnTrack(x, y, z) {
+    const clone = trackFlat.clone();  
+    clone.position.set(x, y, z);    
+    scene.add(clone);        
 }
 
 function animate() {
     requestAnimationFrame(animate);
 
-    player.position.z -= playerSpeed;
-    player.position.x = THREE.MathUtils.lerp(player.position.x, lanes[playerLane + 1], 0.1);
-    camera.position.z = player.position.z + 10;
+    // player.position.z -= playerSpeed;
+    // player.position.x = THREE.MathUtils.lerp(player.position.x, lanes[playerLane + 1], 0.1);
+    // camera.position.z = player.position.z + 10;
 
     renderer.render(scene, camera);
 };

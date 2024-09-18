@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer();
@@ -10,39 +10,31 @@ const lanes = [-3, 0, 3];
 
 let playerSpeed = 0.1;
 let playerLane = 0;
-
 let player;
-let track;
+let trackFlat;
 
 function init(){
     createScene();
     animate();
-}
+};
 
 function createScene(){
     document.body.appendChild(renderer.domElement);
-
     renderer.setSize(window.innerWidth, window.innerHeight);
 
+    // Додаємо світло
     directionalLight.position.set(5, 10, 7.5);
     scene.add(directionalLight);
 
+    // Створюємо гравця
     let geometry = new THREE.BoxGeometry(1, 1, 1);
     let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
     player = new THREE.Mesh(geometry, material);
     player.position.y = 1;
     scene.add(player);
 
-    let trackGeometry = new THREE.PlaneGeometry(10, 1000);
-    let trackMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide });
-    track = new THREE.Mesh(trackGeometry, trackMaterial);
-    scene.add(track);
-    track.rotation.x = Math.PI / 2;
-    track.position.z = -500;
-
     camera.position.set(0, 5, 10);
     camera.lookAt(player.position);
-
 
     document.addEventListener('keydown', (event) => {
         if (event.key === 'ArrowLeft') {
@@ -52,6 +44,19 @@ function createScene(){
             playerLane = Math.min(playerLane + 1, 1);
         }
     });
+
+    loader.load('/models/Track_parts.glb', (gltf) => {
+        trackFlat = gltf.scene.children[1]; 
+        for (let i = 0; i < 15; i++) {
+            addTrackPart(0, 0, -i * 25);
+        }
+    });
+}
+
+function addTrackPart(x, y, z) {
+    const trackClone = trackFlat.clone();  
+    trackClone.position.set(x, y, z);    
+    scene.add(trackClone);               
 }
 
 function animate() {
@@ -62,6 +67,6 @@ function animate() {
     camera.position.z = player.position.z + 10;
 
     renderer.render(scene, camera);
-}
+};
 
 init();

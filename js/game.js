@@ -18,14 +18,16 @@ const GameColors = {
     violet: 0x9d46dd,
 };
 
+const lanePositions = [-3, 0, 3]; 
+let playerPositionIndex = 1; 
+let speed = 0.1;
 let playerModel;
 let playerMixer;
-let trackFlat;
-let brain;
 
-let playerPositionIndex = 1; 
-const lanePositions = [-3, 0, 3]; 
-let speed = 0.1;
+let trackParts = {};
+let brain;
+let wallModel;
+let gateModel;
 
 let isPlayerRun = false; 
 let isGameStart = false;
@@ -47,7 +49,6 @@ function createScene(){
         playerModel = gltf.scene;
         playerModel.position.x = lanePositions[playerPositionIndex];
         scene.add(playerModel);
-        console.log(playerModel);
         playerMixer = new THREE.AnimationMixer(playerModel);
         const animations = gltf.animations;
         const action = playerMixer.clipAction(animations[4]);
@@ -61,18 +62,94 @@ function createScene(){
 
 
     loader.load('/models/Track_parts.glb', (gltf) => {
-        trackFlat = gltf.scene.children[1]; 
-        for (let i = 0; i < 15; i++) {
-            spawnTrack(0, 0, i * 25);
-        }
+        gltf.scene.traverse((child) => {
+             trackParts[child.name] = child;
+        });
+    
+        spawnTrack('Plane_flat', 0, 0, 0); 
+        spawnTrack('Plane_flat', 0, 0, 25); 
+        spawnTrack('Plane_flat', 0, 0, 50); 
+        spawnTrack('Plane_flat', 0, 0, 75); 
+        spawnTrack('Plane_flat', 0, 0, 100); 
+        spawnTrack('Plane_flat', 0, 0, 125); 
+        spawnTrack('Plane_flat', 0, 0, 150); 
+        spawnTrack('Plane_flat', 0, 0, 175); 
+
+        spawnTrack('Plane_Rotator', 0, 0, 200);
+
+        spawnTrack('Plane_flat', 0, 0, 225); 
+        spawnTrack('Plane_flat', 0, 0, 250); 
+        spawnTrack('Plane_flat', 0, 0, 275); 
+
+    });
+
+    loader.load('/models/Destructible_wall_with_anim.glb', (gltf) =>{
+        wallModel = gltf.scene;
+        spawnWall(48);
+        spawnWall(250);
+
+    });
+
+    loader.load('/models/Finish_line.glb', (gltf) =>{
+        let finish = gltf.scene;
+        finish.position.set(0,-2,250);
+        scene.add(finish);
+        console.log(finish);
+    });
+
+    loader.load('/models/Gate_model.glb', (gltf) =>{
+        gateModel = gltf.scene;
+        spawnGate(2.85, 70, GameColors.orange);
+        spawnGate(-2.85, 70, GameColors.violet);
     });
 
     loader.load('/models/Brain_model.glb', (gltf) => {
       brain = gltf.scene.children[0];
 
-      spawnBrain(1, 1, 0, GameColors.blue);
-      spawnBrain(1, 2, 0, GameColors.orange);
-      spawnBrain(1, 3, 0, GameColors.violet);
+      spawnBrain(0, 14, GameColors.violet);
+      spawnBrain(0, 18, GameColors.violet);
+      spawnBrain(0, 22, GameColors.violet);
+      spawnBrain(0, 26, GameColors.violet);
+
+      spawnBrain(-3, 14, GameColors.orange);
+      spawnBrain(-3, 18, GameColors.orange);
+      spawnBrain(-3, 22, GameColors.orange);
+      spawnBrain(-3, 26, GameColors.orange);
+
+
+      spawnBrain(3, 100, GameColors.blue);
+      spawnBrain(3, 104, GameColors.blue);
+      spawnBrain(3, 108, GameColors.blue);
+      spawnBrain(3, 112, GameColors.blue);
+
+      spawnBrain(0, 100, GameColors.orange);
+      spawnBrain(0, 104, GameColors.orange);
+      spawnBrain(0, 108, GameColors.orange);
+      spawnBrain(0, 112, GameColors.orange);
+
+      spawnBrain(-3, 100, GameColors.violet);
+      spawnBrain(-3, 104, GameColors.violet);
+      spawnBrain(-3, 108, GameColors.violet);
+      spawnBrain(-3, 112, GameColors.violet);
+
+      spawnBrain(0, 126, GameColors.violet);
+      spawnBrain(3, 130, GameColors.violet);
+
+      spawnBrain(3, 144, GameColors.violet);
+      spawnBrain(3, 148, GameColors.violet);
+      spawnBrain(3, 152, GameColors.violet);
+      spawnBrain(3, 156, GameColors.violet);
+
+      spawnBrain(0, 144, GameColors.blue);
+      spawnBrain(0, 148, GameColors.blue);
+      spawnBrain(0, 152, GameColors.blue);
+      spawnBrain(0, 156, GameColors.blue);
+
+      spawnBrain(-3, 144, GameColors.orange);
+      spawnBrain(-3, 148, GameColors.orange);
+      spawnBrain(-3, 152, GameColors.orange);
+      spawnBrain(-3, 156, GameColors.orange);
+
     });
 
     camera.position.set(0, 8, -10);
@@ -111,9 +188,31 @@ function movePlayerRight() {
   }
 }
 
-function spawnBrain(x, y, z, color) {
-    const clone = brain.clone();
-    clone.position.set(x, y, z);
+function spawnWall(z){
+    let clone = wallModel.clone();
+    clone.position.set(0, 0, z);
+    clone.scale.set(1.2, 1.2, 1.2); 
+    scene.add(clone);
+}
+
+function spawnBrain(x, z, color) {
+    let clone = brain.clone();
+    clone.position.set(x, 1.5, z);
+    clone.scale.set(1.8, 1.8, 1.8); 
+    clone.traverse((child) => {
+        if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.color.set(color);
+        }
+    });
+
+    scene.add(clone);
+}
+
+function spawnGate(x, z, color){
+    let clone = gateModel.clone();
+    clone.position.set(x, 0, z);
+    clone.scale.set(1.15, 1.15, 1.15); 
 
     clone.traverse((child) => {
         if (child.isMesh) {
@@ -125,10 +224,15 @@ function spawnBrain(x, y, z, color) {
     scene.add(clone);
 }
 
-function spawnTrack(x, y, z) {
-    const clone = trackFlat.clone();
-    clone.position.set(x, y, z);
-    scene.add(clone);
+function spawnTrack(partName, x, y, z) {
+    let part = trackParts[partName];
+    if (part) {
+        let clone = part.clone();
+        clone.position.set(x, y, z);
+        scene.add(clone); 
+    } else {
+        console.error(`Track part ${partName} not found`);
+    }
 }
 
 function setupLights() {
@@ -139,7 +243,7 @@ function setupLights() {
     scene.add(light);
     scene.add(light.target);
 
-    const ambLight = new THREE.AmbientLight(0xbcc7d6);
+    let ambLight = new THREE.AmbientLight(0xbcc7d6);
     scene.add(ambLight);
 }
 

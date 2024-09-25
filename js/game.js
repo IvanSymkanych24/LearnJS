@@ -1,6 +1,20 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+class Brain {
+    constructor(mesh, color) {
+        this.mesh = mesh;              
+        this.color = color;           
+        this.collider = new THREE.Box3().setFromObject(mesh); 
+        this.isCollected = false;
+    }
+
+    updateCollider() {
+        this.collider.setFromObject(this.mesh);
+    }
+};
+
+
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer();
 const loader = new GLTFLoader();
@@ -23,9 +37,14 @@ let playerPositionIndex = 1;
 let speed = 0.1;
 let playerModel;
 let playerMixer;
+let playerCollider = new THREE.Box3();
+let playerColor = GameColors.orange;
+let score = 0;
 
 let trackParts = {};
-let brain;
+let brains = [];
+
+let brainModel;
 let wallModel;
 let gateModel;
 
@@ -47,6 +66,7 @@ function createScene(){
 
     loader.load('models/Stickman_with_anims.glb', (gltf) => {
         playerModel = gltf.scene;
+        console.log(playerModel);
         playerModel.position.x = lanePositions[playerPositionIndex];
         scene.add(playerModel);
         playerMixer = new THREE.AnimationMixer(playerModel);
@@ -58,6 +78,8 @@ function createScene(){
           if (child.name === 'Plane') {
           child.visible = false;
         }});
+
+        setPlayerColor(GameColors.orange);
     });
 
 
@@ -94,7 +116,6 @@ function createScene(){
         let finish = gltf.scene;
         finish.position.set(0,-2,250);
         scene.add(finish);
-        console.log(finish);
     });
 
     loader.load('/models/Gate_model.glb', (gltf) =>{
@@ -104,7 +125,7 @@ function createScene(){
     });
 
     loader.load('/models/Brain_model.glb', (gltf) => {
-      brain = gltf.scene.children[0];
+      brainModel = gltf.scene.children[0];
 
       spawnBrain(0, 14, GameColors.violet);
       spawnBrain(0, 18, GameColors.violet);
@@ -196,7 +217,7 @@ function spawnWall(z){
 }
 
 function spawnBrain(x, z, color) {
-    let clone = brain.clone();
+    let clone = brainModel.clone();
     clone.position.set(x, 1.5, z);
     clone.scale.set(1.8, 1.8, 1.8); 
     clone.traverse((child) => {
@@ -206,6 +227,8 @@ function spawnBrain(x, z, color) {
         }
     });
 
+    let newBrain = new Brain(clone, color);
+    brains.push(newBrain);            
     scene.add(clone);
 }
 
@@ -247,6 +270,41 @@ function setupLights() {
     scene.add(ambLight);
 }
 
+function checkCollisions() {
+    playerCollider.setFromObject(playerModel); 
+
+    for (let i = brains.length - 1; i >= 0; i--) {
+        const brain = brains[i];
+        brain.updateCollider();
+        
+        if (playerCollider.intersectsBox(brain.collider)) {
+            if (brain.color === playerColor) {
+             
+                score++;
+                console.log(`Brain collected!`);
+            } else {
+                score--;
+                console.log(`Wrong color!`);
+            }
+
+            scene.remove(brain.mesh); 
+            brains.splice(i, 1); 
+            console.log(`Score: ${score}`);
+        }
+    }
+}
+
+function setPlayerColor(color) {
+    playerColor = color;
+    playerModel.traverse((child) => {
+        if (child.isMesh) {
+            child.material = child.material.clone();
+            child.material.color.set(color);
+        }
+    });
+
+}
+
 function animate() {
     requestAnimationFrame(animate);
 
@@ -262,6 +320,8 @@ function animate() {
       if (playerMixer) {
           playerMixer.update(0.01);
       }
+
+      checkCollisions();        
   }
 
     renderer.render(scene, camera);

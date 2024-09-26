@@ -46,14 +46,18 @@ let brains = [];
 let brainModel;
 let wallModel;
 let gateModel;
+let rotatingObstacle;
 
 let isPlayerRun = false; 
 let isGameStart = false;
 
+init();
+
 function init(){
     createScene();
-    animate();
     subciribeEvents();
+    animate();
+    rotateObstacle();
 }
 
 function createScene(){
@@ -65,7 +69,6 @@ function createScene(){
 
     loader.load('models/Stickman_with_anims.glb', (gltf) => {
         playerModel = gltf.scene;
-        console.log(playerModel);
         playerModel.position.x = lanePositions[playerPositionIndex];
         scene.add(playerModel);
         playerMixer = new THREE.AnimationMixer(playerModel);
@@ -116,6 +119,13 @@ function createScene(){
         finish.position.set(0,-2,250);
         scene.add(finish);
     });
+
+    loader.load('/models/Rotating_obstacle.glb',(gltf) =>{
+        rotatingObstacle = gltf.scene;
+        rotatingObstacle.position.set(0,0,185);
+        scene.add(rotatingObstacle);
+        console.log(rotatingObstacle);
+    })
 
     loader.load('/models/City_under_track.glb', (gltf) =>{
         let cityModel = gltf.scene;
@@ -339,4 +349,16 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-init();
+
+function rotateObstacle() {
+    requestAnimationFrame(rotateObstacle);
+
+    if (rotatingObstacle) {
+        rotatingObstacle.rotation.y -= 0.03;
+        if (rotatingObstacle.rotation.y >= Math.PI * 2) { 
+            rotatingObstacle.rotation.y = 0; 
+        }
+    }
+
+    renderer.render(scene, camera); 
+}

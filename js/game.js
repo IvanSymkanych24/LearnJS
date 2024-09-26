@@ -14,7 +14,6 @@ class Brain {
     }
 };
 
-
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer();
 const loader = new GLTFLoader();
@@ -117,6 +116,19 @@ function createScene(){
         finish.position.set(0,-2,250);
         scene.add(finish);
     });
+
+    loader.load('/models/City_under_track.glb', (gltf) =>{
+        let cityModel = gltf.scene;
+        cityModel.scale.set(2.5, 2.5, 2.5);
+
+        for (let i = 0; i < 5; i++) {
+            let city = cityModel.clone();
+            city.position.set(0, -10, i * 50); 
+            city.rotation.y = Math.PI / 2; 
+    
+            scene.add(city);
+        }
+    })
 
     loader.load('/models/Gate_model.glb', (gltf) =>{
         gateModel = gltf.scene;
